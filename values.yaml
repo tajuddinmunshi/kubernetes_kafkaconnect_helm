@@ -1,0 +1,77 @@
+# Default values for kafkahelmdeploy.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+metadata:
+  connect:
+    name: kafkaconnect
+namespace: kafkahelm
+
+clientJaasFileName: client-jaas.conf
+clientTruststoreFileName: client-truststore
+
+image:
+  connect:
+    repository: confluentinc/cp-kafka-connect
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: latest
+
+env:
+  connect:
+    configStorageReplicationFactor: 1
+    configStorageTopic: connect-config 
+    groupId: connectgroup
+    internalKeyConverter: org.apache.kafka.connect.storage.StringConverter 
+    internalValueConverter:  org.apache.kafka.connect.json.JsonConverter
+    keyConverter: org.apache.kafka.connect.storage.StringConverter
+    log4jRootLoglevel: INFO
+    offsetStorageReplicationFactor: 1
+    offsetStorageTopic: connect-offsets
+    pluginPath: /usr/share/java
+    restPort: 8083
+    saslMechanism: PLAIN
+    securityProtocol: SASL_SSL
+    statusStorageReplicationFactor: 1
+    statusStorageTopic: connect-status
+    heapOpts: "-Xms1G -Xmx1G -Xss1G"
+    saslEnabled: false
+    sslKeystoreLocation: /etc/kafka-connect/client_keystore
+    sslTruststoreLocation:  /etc/kafka-connect/client-truststore
+    bootstrapServers: ip-10-0-2-8.eu-central-1.compute.internal:30503
+    kafkaOpts: "-Djava.security.auth.login.config=/etc/kafka-connect/client-jaas.conf"
+    valusConverter: org.apache.kafka.connect.json.JsonConverter
+    restAdvertisedHostName: local
+    acks: all
+    
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+secrets:
+  sslTruststorePasswordKey: truststorepass
+  sslKeyPasswordKey: keypass
+  sslSecretName: connect-pass-secret-name
+  clientTruststoreSecretName: client-truststore-secret-name
+  clientJaasSecretName: client-jaas-secret-name
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+service:
+  connect:
+    name: connectsvc
+    type: NodePort
+    port: 8083
+    targetPort: 8083
+    nodePort: 30506
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

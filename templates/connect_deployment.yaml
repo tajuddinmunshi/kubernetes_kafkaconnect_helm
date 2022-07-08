@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.metadata.connect.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "connecthelm.connectlabels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "connecthelm.connectselectors" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "connecthelm.connectselectors" . | nindent 8 }}
+    spec:
+      containers:
+        - env:
+            - name: CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR
+              value: '{{ .Values.env.connect.configStorageReplicationFactor }}'
+            - name: CONNECT_CONFIG_STORAGE_TOPIC
+              value: {{ .Values.env.connect.configStorageTopic }}
+            - name: CONNECT_GROUP_ID
+              value: {{ .Values.env.connect.groupId }}
+            - name: CONNECT_INTERNAL_KEY_CONVERTER
+              value: {{ .Values.env.connect.internalKeyConverter }}
+            - name: CONNECT_INTERNAL_VALUE_CONVERTER
+              value: {{ .Values.env.connect.internalValueConverter }}
+            - name: CONNECT_KEY_CONVERTER
+              value: {{ .Values.env.connect.keyConverter }}
+            - name: CONNECT_LOG4J_ROOT_LOGLEVEL
+              value: {{ .Values.env.connect.log4jRootLoglevel }}
+            - name: CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR
+              value: '{{ .Values.env.connect.offsetStorageReplicationFactor }}'
+            - name: CONNECT_OFFSET_STORAGE_TOPIC
+              value: {{ .Values.env.connect.offsetStorageTopic }}
+            - name: CONNECT_PLUGIN_PATH
+              value: {{ .Values.env.connect.pluginPath }}
+            - name: CONNECT_REST_PORT
+              value: '{{ .Values.env.connect.restPort }}'
+            - name: CONNECT_SASL_MECHANISM
+              value: {{ .Values.env.connect.saslMechanism }}
+            - name: CONNECT_SECURITY_PROTOCOL
+              value: {{ .Values.env.connect.securityProtocol }}
+            - name: CONNECT_STATUS_STORAGE_REPLICATION_FACTOR
+              value: '{{ .Values.env.connect.statusStorageReplicationFactor }}'
+            - name: CONNECT_STATUS_STORAGE_TOPIC
+              value: {{ .Values.env.connect.statusStorageTopic }}
+            - name: KAFKA_HEAP_OPTS
+              value: '{{ .Values.env.connect.heapOpts }}'
+            - name: ZOOKEEPER_SASL_ENABLED
+              value: '{{ .Values.env.connect.saslEnabled }}'
+            - name: CONNECT_SSL_TRUSTSTORE_LOCATION
+              value: {{ .Values.env.connect.sslTruststoreLocation }}
+            - name: CONNECT_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM
+            - name: CONNECT_BOOTSTRAP_SERVERS
+              value: '{{ .Values.env.connect.bootstrapServers }}'
+            - name: CONNECT_SSL_TRUSTSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: {{ .Values.secrets.sslTruststorePasswordKey }}
+                  name: {{ .Values.secrets.sslSecretName }}
+            - name: KAFKA_OPTS
+              value: {{ .Values.env.connect.kafkaOpts }}
+            - name: CONNECT_VALUE_CONVERTER
+              value: {{ .Values.env.connect.valusConverter }}
+            - name: CONNECT_REST_ADVERTISED_HOST_NAME
+              value: {{ .Values.env.connect.restAdvertisedHostName }}
+            - name: CONNECT_ACKS
+              value: {{ .Values.env.connect.acks }}
+          name: {{ .Values.metadata.connect.name }}
+          image: "{{ .Values.image.connect.repository }}:{{ .Values.image.connect.tag }}"
+          imagePullPolicy: {{ .Values.image.connect.pullPolicy }}
+          ports:
+          - containerPort: {{ .Values.service.connect.port }}
+          volumeMounts:
+          - mountPath: /etc/kafka-connect/{{ .Values.clientTruststoreFileName }}
+            subPath: {{ .Values.clientTruststoreFileName }}
+            name: connect-volume-1
+          - mountPath: /etc/kafka-connect/{{ .Values.clientJaasFileName }}
+            subPath: {{ .Values.clientJaasFileName }}
+            name: connect-volume-2
+      volumes:
+      - name: connect-volume-1
+        secret:
+          defaultMode: 420
+          secretName: {{ .Values.secrets.clientTruststoreSecretName }}
+      - name: connect-volume-2
+        secret:
+          defaultMode: 420
+          secretName: {{ .Values.secrets.clientJaasSecretName }}
